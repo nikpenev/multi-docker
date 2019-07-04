@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t nikpenev/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true nikpenev/react-test npm run test -- --watchAll=false
+
+after_success:
+  - docker build -t nikpenev/multi-client ./client
+  - docker build -t nikpenev/multi-nginx ./nginx
+  - docker build -t nikpenev/multi-server ./server
+  - docker build -t nikpenev/multi-worker ./worker
+
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  - docker push nikpenev/multi-client
+  - docker push nikpenev/multi-nginx
+  - docker push nikpenev/multi-server
+  - docker push nikpenev/multi-worker
